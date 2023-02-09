@@ -14,6 +14,7 @@
 ***************************************************************************************/
 
 #include <common.h>
+#include <debug.h>
 
 void init_monitor(int, char *[]);
 void am_init_monitor();
@@ -30,6 +31,7 @@ int main(int argc, char *argv[]) {
 
   /* Start engine. */
   engine_start();
-
+//  int a=is_exit_status_bad();
+//	Log("aaaa: %d", a);
   return is_exit_status_bad();
 }
