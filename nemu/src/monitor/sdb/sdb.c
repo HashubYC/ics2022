@@ -18,6 +18,7 @@
 #include <readline/readline.h>
 #include <readline/history.h>
 #include "sdb.h"
+#include <memory/vaddr.h>
 
 static int is_batch_mode = false;
 
@@ -54,6 +55,81 @@ static int cmd_q(char *args) {
 
 static int cmd_help(char *args);
 
+static int cmd_si(char *args) {
+	// extract the first argument
+  char *arg = strtok(NULL, " ");
+	int n;
+
+	if (arg == NULL) {
+		// ~/ics2022/nemu/src/cpu/cpu-exec.c    static void execute
+		n = 1;
+	} else {
+		n = strtol(arg, NULL, 10);
+	}
+	cpu_exec(n);
+  return 0;
+}
+
+static int cmd_info(char *args) {
+  char *arg = strtok(NULL, " ");
+
+	if (arg == NULL){
+		printf("Usage: info r (registers) or info w (watchpoints)\n");
+	} else {
+	  if (strcmp(arg, "r") == 0) {
+		  isa_reg_display();
+		} else if (strcmp(arg, "w")) {
+		  //todo
+		} else {
+		  printf("Usage: info r (registers) or info w (watchpoints)\n");
+		}
+	}
+	return 0;
+}
+
+static int cmd_x(char *args) {
+	char *arg1 = strtok(NULL, " ");
+	if (arg1 == NULL) {
+	  printf("Usage: x N EXPR\n");
+		return 0;
+	}
+
+	char *arg2 = strtok(NULL, " ");
+	if (arg2 == NULL) {
+	  printf("Usage: x N EXPR\n");
+		return 0;
+	}
+
+	int n = strtol(arg1, NULL, 10);
+	vaddr_t expr = strtol(arg2, NULL, 16);
+
+	int i,j;
+	for (i = 0; i < n;){
+	  printf(ANSI_FMT("%#018x: ", ANSI_FG_CYAN), expr);
+
+		for (j = 0; i < n && j < 4; i++, j++) {
+		  word_t w = vaddr_read(expr, 8);
+			expr += 8;
+			printf("%#018x ",w);
+		}
+		puts("");
+	}
+
+	return 0;
+}
+
+static int cmd_p(char *args) {
+  bool success;
+	word_t res = expr(args, &success);
+	if (!success) {
+	  puts("invalid expression");
+	} else {
+	  printf("%u\n", res);
+	}
+	return 0;
+}
+
+
 static struct {
   const char *name;
   const char *description;
@@ -62,6 +138,10 @@ static struct {
   { "help", "Display information about all supported commands", cmd_help },
   { "c", "Continue the execution of the program", cmd_c },
   { "q", "Exit NEMU", cmd_q },
+  { "si", "Continue the execution in N steps, default 1", cmd_si},
+  { "info", "Print register status OR monitoring status",cmd_info},
+  { "x", "Usage: x N EXPR. Scan the memory from EXPR by N bytes",cmd_x},
+	{ "p", "Usage: p EXPR. Calculate the expression, e.g. p $eax + 1", cmd_p }
 
   /* TODO: Add more commands */
 
